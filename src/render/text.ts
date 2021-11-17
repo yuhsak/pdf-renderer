@@ -1,19 +1,33 @@
 import type { PDFPage, PDFFont } from 'pdf-lib'
-import { rgb } from 'pdf-lib'
+import { rgb, setCharacterSpacing } from 'pdf-lib'
 import { getOffset, getSize, calcX, calcY, pt, hex2rgb } from '../util'
 import type { TemplateSchemaItemText } from '../template/schema'
+
+const getWidthOfTextAtSize = (
+  font: PDFFont,
+  text: string,
+  size: number,
+  spacing: number,
+) => {
+  const margin = [...text].reduce(
+    (acc, char, i) => acc + spacing * Math.min(i, 1),
+    0,
+  )
+  return font.widthOfTextAtSize(text, size) + margin
+}
 
 const getLines = (
   input: string,
   font: PDFFont,
   size: number,
+  spacing: number,
   containerWidth: number,
 ) => {
   return input.split(/\r\n|\r|\n/).flatMap((line) => {
     return [...line].reduce(
       (acc, char) => {
         const text = acc[acc.length - 1]! + char
-        const textWidth = font.widthOfTextAtSize(text, size)
+        const textWidth = getWidthOfTextAtSize(font, text, size, spacing)
         if (textWidth < containerWidth) {
           acc[acc.length - 1] = text
         } else {
@@ -42,13 +56,14 @@ const getAdjustedLines = (
   font: PDFFont,
   textHeight: number,
   lineHeight: number,
+  spacing: number,
   containerWidth: number,
   containerHeight: number,
   minTextHeight: number,
   shrink: boolean,
 ) => {
   let size = font.sizeAtHeight(textHeight)
-  let lines = getLines(input, font, size, containerWidth)
+  let lines = getLines(input, font, size, spacing, containerWidth)
 
   if (!shrink) {
     return {
@@ -62,7 +77,7 @@ const getAdjustedLines = (
   while (renderedHeight > containerHeight && textHeight > minTextHeight) {
     textHeight *= 0.95
     size = font.sizeAtHeight(textHeight)
-    lines = getLines(input, font, size, containerWidth)
+    lines = getLines(input, font, size, spacing, containerWidth)
     renderedHeight = getRenderedHeight(lines, textHeight, lineHeight)
   }
 
@@ -83,6 +98,7 @@ export const drawText =
     align = 'left',
     color = '#000',
     opacity = 1.0,
+    spacing = 0,
     ...schema
   }: TemplateSchemaItemText) => {
     const offset = getOffset(schema)
@@ -90,6 +106,8 @@ export const drawText =
     const textHeight = pt(size, schema.unit)
     const minTextHeight = pt(minSize, schema.unit)
     const [r, g, b] = hex2rgb(color)
+    const textSpacing = pt(spacing, schema.unit)
+    page.pushOperators(setCharacterSpacing(textSpacing))
 
     return async (input: string, font: PDFFont) => {
       const {
@@ -101,6 +119,7 @@ export const drawText =
         font,
         textHeight,
         lineHeight,
+        textSpacing,
         width,
         height,
         minTextHeight,
@@ -108,7 +127,7 @@ export const drawText =
       )
 
       lines.map((line, i) => {
-        const textWidth = font.widthOfTextAtSize(line, size)
+        const textWidth = getWidthOfTextAtSize(font, line, size, textSpacing)
         const x = calcX(offset.x, width, textWidth, align)
         const y = calcY(
           offset.y + adjustedTextHeight * lineHeight * i,

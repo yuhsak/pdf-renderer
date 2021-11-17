@@ -1,15 +1,16 @@
 import { template } from '../src'
 
 const source = { width: 100, height: 100 }
-const empty = template({ source, schema: [] })({}).then((doc) => doc.save())
 
 describe('text', () => {
   test('renders text', async () => {
-    const emptyBinary = await empty
+    const emptyBinary = await template({ source, schema: [] })({}).then((doc) =>
+      doc.save(),
+    )
     const [binary1, binary2] = await template({
       source,
       schema: [{ text: { type: 'text', x: 0, y: 0, width: 100, height: 100 } }],
-    })([{ text: 'Test 1' }, { text: 'Test 2' }]).then((docs) =>
+    })([{ text: 'Test 1' }, { text: 'Test 10' }]).then((docs) =>
       Promise.all(docs.map((doc) => doc.save())),
     )
     expect(emptyBinary.byteLength).not.toEqual(binary1.byteLength)

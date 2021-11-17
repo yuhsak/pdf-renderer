@@ -10,6 +10,7 @@ export type TemplateSchemaItemText = {
   minSize?: number
   color?: string
   opacity?: number
+  spacing?: number
 } & SizeInput &
   OffsetInput
 

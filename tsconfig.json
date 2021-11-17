@@ -1,0 +1,23 @@
+{
+  "include": ["src"],
+  "compilerOptions": {
+    "module": "esnext",
+    "outDir": "./lib/esm",
+    "tsBuildInfoFile": "./lib/esm/.tsbuildinfo",
+    "target": "es6",
+    "moduleResolution": "node",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}

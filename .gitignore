@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+/lib/
+/coverage/
+/assets/*.ttf
+/assets/*.ttc
+!/assets/Ubuntu-R.ttf
+/*.pdf

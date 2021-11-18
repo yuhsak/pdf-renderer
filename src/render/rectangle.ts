@@ -22,7 +22,7 @@ export const drawRectangle =
     const innerHeightPt = height - borderWidthPt
 
     return async () => {
-      const x = getX(offset.x, width, width, 'left') + borderWidthPt / 2
+      const x = getX(offset.x, width, width) + borderWidthPt / 2
       const y = getY(offset.y, page.getHeight(), height) + borderWidthPt / 2
       page.drawRectangle({
         x,

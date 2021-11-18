@@ -26,7 +26,7 @@ export const drawImage =
             height: image.height,
           }
 
-      const x = getX(offset.x, width, width, 'left')
+      const x = getX(offset.x, width, width)
       const y = getY(offset.y, page.getHeight(), height)
 
       page.drawImage(image, {

@@ -14,12 +14,22 @@ export type Template<S extends readonly TemplateSchema[]> = {
   source: TemplateSource | TemplateSource[]
   schema: S
   font?: TemplateFont
+  meta?: {
+    title?: string
+    subject?: string
+    author?: string
+    producer?: string
+    creator?: string
+    language?: string
+    keywords?: string[]
+  }
 }
 
 export const template = <S extends readonly TemplateSchema[]>({
   source,
   schema,
   font,
+  meta,
 }: Template<S>) => {
   const sources = isArray(source) ? source : [source]
   const getFont = embedFonts({ ...font }, schema)
@@ -35,6 +45,24 @@ export const template = <S extends readonly TemplateSchema[]>({
       inputs.map(async (input) => {
         const doc = await PDFDocument.create()
         doc.registerFontkit(fontkit)
+
+        if (meta) {
+          doc.setProducer(
+            meta.producer !== void 0
+              ? meta.producer
+              : 'pdf-renderer (https://github.com/yuhsak/pdf-renderer)',
+          )
+          doc.setCreator(
+            meta.creator !== void 0
+              ? meta.creator
+              : 'pdf-renderer (https://github.com/yuhsak/pdf-renderer)',
+          )
+          if (meta.title) doc.setTitle(meta.title)
+          if (meta.subject) doc.setSubject(meta.subject)
+          if (meta.author) doc.setAuthor(meta.author)
+          if (meta.language) doc.setLanguage(meta.language)
+          if (meta.keywords) doc.setKeywords(meta.keywords)
+        }
 
         const fontData = await getFont(doc)
         const getPages = getPagesFromSource(doc)

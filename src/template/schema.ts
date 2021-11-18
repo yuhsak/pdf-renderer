@@ -5,7 +5,7 @@ export type TemplateSchemaItemText = {
   size?: number
   font?: string
   align?: 'left' | 'center' | 'right'
-  verticalAlign?: 'bottom' | 'center' | 'top'
+  verticalAlign?: 'top' | 'middle' | 'bottom'
   lineHeight?: number
   color?: string
   opacity?: number

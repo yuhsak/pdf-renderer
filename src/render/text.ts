@@ -193,6 +193,7 @@ export const drawText =
     lineHeight = 1.0,
     spacing: spacingMm = 0,
     align = 'left',
+    verticalAlign = 'top',
     color: colorCode = '#000',
     opacity = 1.0,
     shrink = false,
@@ -232,12 +233,24 @@ export const drawText =
         maxLength,
       )
 
+      const offsetVUnit =
+        verticalAlign === 'top' ? 1 : verticalAlign === 'middle' ? 0.5 : 0
+
+      const offsetV =
+        (lines.length - 1) *
+        (boxHeight + boxHeight * Math.max(0, lineHeight - 1)) *
+        offsetVUnit
+
       lines.reverse().reduce((offsetY, line, i) => {
         const textWidth = getWidthOfTextAtSize(line, font, size, spacing)
-        const textHeight = getHeightOfTextAtSize(line, font, size)
+        // const textHeight = getHeightOfTextAtSize(line, font, size)
 
         const x = getX(offset.x, width, textWidth, align)
-        const y = getY(offset.y + offsetY, page.getHeight(), textHeight)
+        const y = getY(
+          offset.y + offsetY - offsetV,
+          page.getHeight(),
+          boxHeight,
+        )
 
         page.drawText(line, {
           x,
@@ -249,7 +262,7 @@ export const drawText =
           wordBreaks: [''],
         })
 
-        return offsetY + textHeight + boxHeight * Math.max(0, lineHeight - 1)
+        return offsetY + boxHeight + boxHeight * Math.max(0, lineHeight - 1)
       }, 0)
     }
   }

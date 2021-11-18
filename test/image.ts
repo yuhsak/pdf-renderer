@@ -17,7 +17,6 @@ describe('image', () => {
         {
           image: {
             type: 'image',
-            format: 'png',
             x: 0,
             y: 0,
             width: 100,
@@ -40,7 +39,6 @@ describe('image', () => {
         {
           image: {
             type: 'image',
-            format: 'jpg',
             x: 0,
             y: 0,
             width: 100,
@@ -61,7 +59,6 @@ describe('image', () => {
         {
           image: {
             type: 'image',
-            format: 'png',
             x: 0,
             y: 0,
             width: 100,
@@ -84,7 +81,6 @@ describe('image', () => {
         {
           image: {
             type: 'image',
-            format: 'png',
             x: 0,
             y: 0,
             width: 100,
@@ -99,7 +95,6 @@ describe('image', () => {
         {
           image: {
             type: 'image',
-            format: 'png',
             x: 0,
             y: 0,
           },

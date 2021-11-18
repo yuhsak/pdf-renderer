@@ -7,14 +7,23 @@ import {
   getX,
   getY,
   BinarySource,
+  detectImageFormat,
 } from '../util'
 
 export const drawImage =
   (doc: PDFDocument, page: PDFPage) =>
-  ({ format, opacity = 1.0, ...schema }: TemplateSchemaItemImage) => {
+  ({ opacity = 1.0, ...schema }: TemplateSchemaItemImage) => {
     const offset = getOffset(schema)
 
     return async (source: BinarySource) => {
+      const format = detectImageFormat(source)
+
+      if (format === 'unknown') {
+        throw new Error(
+          'Unknown image format detected. Only PNG or JPG can be embedded.',
+        )
+      }
+
       const image = await (format === 'jpg'
         ? doc.embedJpg(source)
         : doc.embedPng(source))

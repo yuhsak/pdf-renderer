@@ -1,4 +1,5 @@
 import { isString, isArrayBuffer, isUint8Array, isBuffer } from 'what-is-that'
+import { decodeFromBase64DataUri } from 'pdf-lib'
 
 export type BinarySource = Uint8Array | ArrayBuffer | Buffer | string
 
@@ -87,4 +88,25 @@ export const getY = (
 ) => {
   return y
   // return containerHeight - contentHeight - y
+}
+
+const SIGNATURE = {
+  png: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  jpg: [0xff, 0xd8, 0xff],
+}
+
+export const detectImageFormat = (source: BinarySource) => {
+  const binary =
+    typeof source === 'string'
+      ? decodeFromBase64DataUri(source)
+      : isArrayBuffer(source)
+      ? new Uint8Array(source)
+      : source
+  if ([...binary.slice(0, 8)].join() === SIGNATURE.png.join()) {
+    return 'png'
+  }
+  if ([...binary.slice(0, 3)].join() === SIGNATURE.jpg.join()) {
+    return 'jpg'
+  }
+  return 'unknown'
 }

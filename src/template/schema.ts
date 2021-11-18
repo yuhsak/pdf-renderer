@@ -46,7 +46,6 @@ export type TemplateSchemaItemLine = {
 
 export type TemplateSchemaItemImage = {
   type: 'image'
-  format: 'jpg' | 'png'
   opacity?: number
 } & Partial<SizeInput> &
   OffsetInput

@@ -69,18 +69,18 @@ export const getOffset = ({ unit, ...input }: OffsetInput): Offset => {
   return { x, y }
 }
 
-export const calcX = (
+export const getX = (
   x: number,
   containerWidth: number,
   contentWidth: number,
-  align: 'left' | 'center' | 'right',
+  align: 'left' | 'center' | 'right' = 'left',
 ) => {
   const diff = containerWidth - contentWidth
   const offset = align === 'left' ? 0 : align === 'center' ? diff / 2 : diff
   return x + offset
 }
 
-export const calcY = (
+export const getY = (
   y: number,
   containerHeight: number,
   contentHeight: number,

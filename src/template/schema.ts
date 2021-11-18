@@ -6,11 +6,14 @@ export type TemplateSchemaItemText = {
   font?: string
   align?: 'left' | 'center' | 'right'
   lineHeight?: number
-  shrink?: boolean
-  minSize?: number
   color?: string
   opacity?: number
   spacing?: number
+  shrink?: boolean
+  minSize?: number
+  wrap?: boolean
+  nOfLines?: number
+  maxLength?: number
 } & SizeInput &
   OffsetInput
 

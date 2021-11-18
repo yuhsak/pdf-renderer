@@ -1,43 +1,16 @@
 import type { PDFPage, PDFFont } from 'pdf-lib'
 import { rgb, setCharacterSpacing } from 'pdf-lib'
-import { getOffset, getSize, calcX, calcY, pt, hex2rgb } from '../util'
+import { getOffset, getSize, getX, getY, pt, mm2pt, hex2rgb } from '../util'
 import type { TemplateSchemaItemText } from '../template/schema'
 
 const getWidthOfTextAtSize = (
-  font: PDFFont,
   text: string,
-  size: number,
-  spacing: number,
-) => {
-  const margin = [...text].reduce(
-    (acc, char, i) => acc + spacing * Math.min(i, 1),
-    0,
-  )
-  return font.widthOfTextAtSize(text, size) + margin
-}
-
-const getLines = (
-  input: string,
   font: PDFFont,
   size: number,
   spacing: number,
-  containerWidth: number,
 ) => {
-  return input.split(/\r\n|\r|\n/).flatMap((line) => {
-    return [...line].reduce(
-      (acc, char) => {
-        const text = acc[acc.length - 1]! + char
-        const textWidth = getWidthOfTextAtSize(font, text, size, spacing)
-        if (textWidth < containerWidth) {
-          acc[acc.length - 1] = text
-        } else {
-          acc.push(char)
-        }
-        return acc
-      },
-      [''],
-    )
-  })
+  const margin = Math.max(0, ([...text].length - 1) * spacing)
+  return font.widthOfTextAtSize(text, size) + margin
 }
 
 const getRenderedHeight = (
@@ -45,13 +18,85 @@ const getRenderedHeight = (
   textHeight: number,
   lineHeight: number,
 ) => {
-  return lines.reduce((acc, line, i) => {
-    const margin = (textHeight * lineHeight - textHeight) * Math.min(1, i)
-    return acc + textHeight + margin
-  }, 0)
+  const margin = Math.max(
+    0,
+    (textHeight * lineHeight - textHeight) * (lines.length - 1),
+  )
+  const height = textHeight * lines.length
+  return margin + height
 }
 
-const getAdjustedLines = (
+const getRenderedWidth = (
+  lines: string[],
+  font: PDFFont,
+  size: number,
+  spacing: number,
+) => {
+  return lines
+    .map((line) => getWidthOfTextAtSize(line, font, size, spacing))
+    .reduce((max, width) => Math.max(max, width), 0)
+}
+
+const fold = (
+  text: string,
+  font: PDFFont,
+  size: number,
+  spacing: number,
+  containerWidth: number,
+) => {
+  let renderedWidth = getWidthOfTextAtSize(text, font, size, spacing)
+  let newLine = ''
+
+  while (containerWidth < renderedWidth) {
+    const length = [...text].length
+    const diff = renderedWidth - containerWidth
+    const ratio = diff / renderedWidth
+    const nMaybeExceeds =
+      renderedWidth <= 0 || diff <= 0
+        ? 0
+        : Math.max(1, Math.floor(length * ratio))
+    newLine = text.slice(-1 * nMaybeExceeds) + newLine
+    text = text.slice(0, length - nMaybeExceeds)
+    renderedWidth = getWidthOfTextAtSize(text, font, size, spacing)
+  }
+
+  return newLine ? [text, newLine] : [text]
+}
+
+const getWrappedLines = (
+  lines: string[],
+  font: PDFFont,
+  size: number,
+  spacing: number,
+  containerWidth: number,
+  nOfLines?: number,
+) => {
+  return lines.reduce((acc, line, i, lines) => {
+    let folded = [line]
+    let foldable =
+      !nOfLines || Math.max(acc.length + folded.length, lines.length) < nOfLines
+    let maybeBeFolded = true
+
+    while (foldable && maybeBeFolded) {
+      const nextFolded = fold(
+        folded.slice(-1)[0]!,
+        font,
+        size,
+        spacing,
+        containerWidth,
+      )
+      folded = [...folded.slice(0, -1), ...nextFolded]
+      foldable =
+        !nOfLines ||
+        Math.max(acc.length + folded.length, lines.length) < nOfLines
+      maybeBeFolded = 1 < nextFolded.length
+    }
+
+    return [...acc, ...folded]
+  }, [] as string[])
+}
+
+const getLayout = (
   input: string,
   font: PDFFont,
   textHeight: number,
@@ -59,11 +104,38 @@ const getAdjustedLines = (
   spacing: number,
   containerWidth: number,
   containerHeight: number,
-  minTextHeight: number,
   shrink: boolean,
+  minTextHeight: number,
+  wrap: boolean,
+  nOfLines?: number,
+  maxLength?: number,
 ) => {
+  const getLines = (
+    lines: string[],
+    font: PDFFont,
+    size: number,
+    spacing: number,
+    containerWidth: number,
+    nOfLines?: number,
+  ) => {
+    return wrap && (nOfLines === void 0 || nOfLines > 1)
+      ? getWrappedLines(lines, font, size, spacing, containerWidth, nOfLines)
+      : lines
+  }
+
+  const preWrapped = input.split(/\r\n|\r|\n/).map((line) => {
+    return maxLength ? line.slice(0, maxLength) : line
+  })
+
   let size = font.sizeAtHeight(textHeight)
-  let lines = getLines(input, font, size, spacing, containerWidth)
+  let lines = getLines(
+    preWrapped,
+    font,
+    size,
+    spacing,
+    containerWidth,
+    nOfLines,
+  )
 
   if (!shrink) {
     return {
@@ -74,11 +146,16 @@ const getAdjustedLines = (
   }
 
   let renderedHeight = getRenderedHeight(lines, textHeight, lineHeight)
-  while (renderedHeight > containerHeight && textHeight > minTextHeight) {
-    textHeight *= 0.95
+  let renderedWidth = getRenderedWidth(lines, font, size, spacing)
+  while (
+    (renderedHeight > containerHeight || renderedWidth > containerWidth) &&
+    textHeight > minTextHeight
+  ) {
+    textHeight -= mm2pt(1)
     size = font.sizeAtHeight(textHeight)
-    lines = getLines(input, font, size, spacing, containerWidth)
+    lines = getLines(preWrapped, font, size, spacing, containerWidth, nOfLines)
     renderedHeight = getRenderedHeight(lines, textHeight, lineHeight)
+    renderedWidth = getRenderedWidth(lines, font, size, spacing)
   }
 
   return {
@@ -91,57 +168,62 @@ const getAdjustedLines = (
 export const drawText =
   (page: PDFPage) =>
   ({
+    size = 8,
     lineHeight = 1.0,
-    size = 14,
-    minSize = 4,
-    shrink = true,
+    spacing: spacingMm = 0,
     align = 'left',
-    color = '#000',
+    color: colorCode = '#000',
     opacity = 1.0,
-    spacing = 0,
+    shrink = false,
+    minSize = 4,
+    wrap = false,
+    nOfLines,
+    maxLength,
+    unit,
     ...schema
   }: TemplateSchemaItemText) => {
     const offset = getOffset(schema)
     const { width, height } = getSize(schema)
-    const textHeight = pt(size, schema.unit)
-    const minTextHeight = pt(minSize, schema.unit)
-    const [r, g, b] = hex2rgb(color)
-    const textSpacing = pt(spacing, schema.unit)
-    page.pushOperators(setCharacterSpacing(textSpacing))
+    const initialTextHeight = pt(size, unit)
+    const minTextHeight = pt(minSize, unit)
+    const color = rgb(...hex2rgb(colorCode))
+    const spacing = pt(spacingMm, unit)
 
     return async (input: string, font: PDFFont) => {
-      const {
-        lines,
-        size,
-        textHeight: adjustedTextHeight,
-      } = getAdjustedLines(
+      page.pushOperators(setCharacterSpacing(spacing))
+
+      const { lines, size, textHeight } = getLayout(
         input,
         font,
-        textHeight,
+        initialTextHeight,
         lineHeight,
-        textSpacing,
+        spacing,
         width,
         height,
-        minTextHeight,
         shrink,
+        minTextHeight,
+        wrap,
+        nOfLines,
+        maxLength,
       )
 
       lines.map((line, i) => {
-        const textWidth = getWidthOfTextAtSize(font, line, size, textSpacing)
-        const x = calcX(offset.x, width, textWidth, align)
-        const y = calcY(
-          offset.y + adjustedTextHeight * lineHeight * i,
+        const textWidth = getWidthOfTextAtSize(line, font, size, spacing)
+        const x = getX(offset.x, width, textWidth, align)
+        const y = getY(
+          offset.y + textHeight * lineHeight * i,
           page.getHeight(),
-          adjustedTextHeight,
+          textHeight,
         )
+
         page.drawText(line, {
           x,
           y,
           size,
           font,
-          maxWidth: width,
-          color: rgb(r, g, b),
+          color,
           opacity,
+          wordBreaks: [''],
         })
       })
     }

@@ -1,7 +1,7 @@
 import type { PDFPage } from 'pdf-lib'
 import type { TemplateSchemaItemLine } from '../template/schema'
 import { rgb } from 'pdf-lib'
-import { getSize, getOffset, pt, hex2rgb, calcX, calcY } from '../util'
+import { getSize, getOffset, pt, hex2rgb, getX, getY } from '../util'
 
 export const drawLine =
   (page: PDFPage) =>

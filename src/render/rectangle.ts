@@ -1,7 +1,7 @@
 import type { PDFPage } from 'pdf-lib'
 import type { TemplateSchemaItemRectangle } from '../template/schema'
 import { rgb } from 'pdf-lib'
-import { getSize, getOffset, pt, hex2rgb, calcX, calcY } from '../util'
+import { getSize, getOffset, pt, hex2rgb, getX, getY } from '../util'
 
 export const drawRectangle =
   (page: PDFPage) =>
@@ -22,8 +22,8 @@ export const drawRectangle =
     const innerHeightPt = height - borderWidthPt
 
     return async () => {
-      const x = calcX(offset.x, width, width, 'left') + borderWidthPt / 2
-      const y = calcY(offset.y, page.getHeight(), height) + borderWidthPt / 2
+      const x = getX(offset.x, width, width, 'left') + borderWidthPt / 2
+      const y = getY(offset.y, page.getHeight(), height) + borderWidthPt / 2
       page.drawRectangle({
         x,
         y,

@@ -4,8 +4,8 @@ import {
   isSizeInput,
   getSize,
   getOffset,
-  calcX,
-  calcY,
+  getX,
+  getY,
   BinarySource,
 } from '../util'
 
@@ -26,8 +26,8 @@ export const drawImage =
             height: image.height,
           }
 
-      const x = calcX(offset.x, width, width, 'left')
-      const y = calcY(offset.y, page.getHeight(), height)
+      const x = getX(offset.x, width, width, 'left')
+      const y = getY(offset.y, page.getHeight(), height)
 
       page.drawImage(image, {
         x,

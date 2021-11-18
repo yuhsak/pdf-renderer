@@ -5,36 +5,36 @@ const source = { width: 100, height: 100 }
 describe('text', () => {
   test('renders text', async () => {
     const emptyBinary = await template({ source, schema: [] })({}).then((doc) =>
-      doc.save(),
+      doc.save().then((bin) => [...bin]),
     )
     const [binary1, binary2] = await template({
       source,
       schema: [{ text: { type: 'text', x: 0, y: 0, width: 100, height: 100 } }],
     })([{ text: 'Test 1' }, { text: 'Test 10' }]).then((docs) =>
-      Promise.all(docs.map((doc) => doc.save())),
+      Promise.all(docs.map((doc) => doc.save().then((bin) => [...bin]))),
     )
-    expect(emptyBinary.byteLength).not.toEqual(binary1.byteLength)
-    expect(emptyBinary.byteLength).not.toEqual(binary2.byteLength)
-    expect(binary1.byteLength).not.toEqual(binary2.byteLength)
+    expect(emptyBinary).not.toEqual(binary1)
+    expect(emptyBinary).not.toEqual(binary2)
+    expect(binary1).not.toEqual(binary2)
   })
 
   test('skip if input value is boolean or binary', async () => {
     const binary1 = await template({
       source,
       schema: [{ text: { type: 'text', x: 0, y: 0, width: 100, height: 100 } }],
-    })({ text: false }).then((doc) => doc.save())
+    })({ text: false }).then((doc) => doc.save().then((bin) => [...bin]))
     const binary2 = await template({
       source,
       schema: [
         { text: { type: 'text', x: 50, y: 50, width: 100, height: 100 } },
       ],
-    })({ text: false }).then((doc) => doc.save())
+    })({ text: false }).then((doc) => doc.save().then((bin) => [...bin]))
     const binary3 = await template({
       source,
       schema: [
         { text: { type: 'text', x: 50, y: 50, width: 100, height: 100 } },
       ],
-    })({ text: true }).then((doc) => doc.save())
+    })({ text: true }).then((doc) => doc.save().then((bin) => [...bin]))
     const t = template({
       source,
       schema: [
@@ -43,13 +43,11 @@ describe('text', () => {
     })
     // @ts-expect-error
     const binary4 = await t({ text: new Uint8Array() }).then((doc) =>
-      doc.save(),
+      doc.save().then((bin) => [...bin]),
     )
-    const min = binary1.byteLength - 1
-    const max = binary1.byteLength + 1
-    expect(min <= binary2.byteLength && binary2.byteLength <= max).toBe(true)
-    expect(min <= binary3.byteLength && binary3.byteLength <= max).toBe(true)
-    expect(min <= binary4.byteLength && binary4.byteLength <= max).toBe(true)
+    expect(binary1).toEqual(binary2)
+    expect(binary2).toEqual(binary3)
+    expect(binary3).toEqual(binary4)
   })
 
   test('rejects if color is invalid', () => {
@@ -87,7 +85,8 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a' }).then((doc) => doc.save())
+    })({ text: 'a' }).then((doc) => doc.save().then((bin) => [...bin]))
+
     const binary2 = await template({
       source,
       schema: [
@@ -102,7 +101,8 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a' }).then((doc) => doc.save())
+    })({ text: 'a' }).then((doc) => doc.save().then((bin) => [...bin]))
+
     const binary3 = await template({
       source,
       schema: [
@@ -117,10 +117,11 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a' }).then((doc) => doc.save())
-    expect(binary1.byteLength).not.toEqual(binary2.byteLength)
-    expect(binary1.byteLength).not.toEqual(binary3.byteLength)
-    expect(binary2.byteLength).not.toEqual(binary3.byteLength)
+    })({ text: 'a' }).then((doc) => doc.save().then((bin) => [...bin]))
+
+    expect(binary1).not.toEqual(binary2)
+    expect(binary1).not.toEqual(binary3)
+    expect(binary2).not.toEqual(binary3)
   })
 
   test('works with unit', async () => {
@@ -138,7 +139,8 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a' }).then((doc) => doc.save())
+    })({ text: 'a' }).then((doc) => doc.save().then((bin) => [...bin]))
+
     const binary2 = await template({
       source,
       schema: [
@@ -152,8 +154,9 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a' }).then((doc) => doc.save())
-    expect(binary1.byteLength).not.toEqual(binary2.byteLength)
+    })({ text: 'a' }).then((doc) => doc.save().then((bin) => [...bin]))
+
+    expect(binary1).not.toEqual(binary2)
   })
 
   test('shrink if rendered height exceeds container height', async () => {
@@ -171,7 +174,9 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a'.repeat(100) }).then((doc) => doc.save())
+    })({ text: 'a'.repeat(100) }).then((doc) =>
+      doc.save().then((bin) => [...bin]),
+    )
 
     const shrink = await template({
       source,
@@ -187,7 +192,9 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a'.repeat(100) }).then((doc) => doc.save())
+    })({ text: 'a'.repeat(100) }).then((doc) =>
+      doc.save().then((bin) => [...bin]),
+    )
 
     const shrinkMore = await template({
       source,
@@ -204,9 +211,11 @@ describe('text', () => {
           },
         },
       ],
-    })({ text: 'a'.repeat(100) }).then((doc) => doc.save())
+    })({ text: 'a'.repeat(100) }).then((doc) =>
+      doc.save().then((bin) => [...bin]),
+    )
 
-    expect(shrink.byteLength).not.toEqual(notShrink.byteLength)
-    expect(shrink.byteLength).not.toEqual(shrinkMore.byteLength)
+    expect(shrink).not.toEqual(notShrink)
+    expect(shrink).not.toEqual(shrinkMore)
   })
 })

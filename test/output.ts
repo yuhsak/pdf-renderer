@@ -45,7 +45,7 @@ describe('output', () => {
       schema: [],
     })({})
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     const unusable = await template({
       source: { width: 100, height: 100 },
@@ -55,7 +55,7 @@ describe('output', () => {
       ],
     })({ rect: true })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     expect(empty).toEqual(unusable)
   })
@@ -66,7 +66,7 @@ describe('output', () => {
       schema: [],
     })({})
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     const unknown = await template({
       source: { width: 100, height: 100 },
@@ -74,7 +74,7 @@ describe('output', () => {
       schema: [{ text: { type: 'unknown' } }],
     })({ text: 'ok' })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     expect(empty).toEqual(unknown)
   })

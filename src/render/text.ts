@@ -13,16 +13,37 @@ const getWidthOfTextAtSize = (
   return font.widthOfTextAtSize(text, size) + margin
 }
 
+const getHeightOfTextAtSize = (text: string, font: PDFFont, size: number) => {
+  return font.heightAtSize(size)
+  /*
+  const scale = size / 1000
+  // @ts-ignore
+  const embedder = font.embedder
+  const { glyphs } = embedder.font.layout(text, embedder.fontFeatures)
+  return glyphs.reduce((acc: number, { cbox: { maxY, minY } }: any) => {
+    const height = (maxY - minY) * scale
+    return Math.max(acc, height)
+  }, 0) as number
+  */
+}
+
 const getRenderedHeight = (
   lines: string[],
-  textHeight: number,
+  font: PDFFont,
+  size: number,
   lineHeight: number,
 ) => {
+  const textHeight = font.heightAtSize(size)
+
+  const height = lines.reduce((height, line) => {
+    return height + getHeightOfTextAtSize(line, font, size)
+  }, 0)
+
   const margin = Math.max(
     0,
     (textHeight * lineHeight - textHeight) * (lines.length - 1),
   )
-  const height = textHeight * lines.length
+
   return margin + height
 }
 
@@ -145,7 +166,7 @@ const getLayout = (
     }
   }
 
-  let renderedHeight = getRenderedHeight(lines, textHeight, lineHeight)
+  let renderedHeight = getRenderedHeight(lines, font, size, lineHeight)
   let renderedWidth = getRenderedWidth(lines, font, size, spacing)
   while (
     (renderedHeight > containerHeight || renderedWidth > containerWidth) &&
@@ -154,7 +175,7 @@ const getLayout = (
     textHeight -= mm2pt(1)
     size = font.sizeAtHeight(textHeight)
     lines = getLines(preWrapped, font, size, spacing, containerWidth, nOfLines)
-    renderedHeight = getRenderedHeight(lines, textHeight, lineHeight)
+    renderedHeight = getRenderedHeight(lines, font, size, lineHeight)
     renderedWidth = getRenderedWidth(lines, font, size, spacing)
   }
 
@@ -192,7 +213,11 @@ export const drawText =
     return async (input: string, font: PDFFont) => {
       page.pushOperators(setCharacterSpacing(spacing))
 
-      const { lines, size, textHeight } = getLayout(
+      const {
+        lines,
+        size,
+        textHeight: boxHeight,
+      } = getLayout(
         input,
         font,
         initialTextHeight,
@@ -207,14 +232,12 @@ export const drawText =
         maxLength,
       )
 
-      lines.map((line, i) => {
+      lines.reverse().reduce((offsetY, line, i) => {
         const textWidth = getWidthOfTextAtSize(line, font, size, spacing)
+        const textHeight = getHeightOfTextAtSize(line, font, size)
+
         const x = getX(offset.x, width, textWidth, align)
-        const y = getY(
-          offset.y + textHeight * lineHeight * i,
-          page.getHeight(),
-          textHeight,
-        )
+        const y = getY(offset.y + offsetY, page.getHeight(), textHeight)
 
         page.drawText(line, {
           x,
@@ -225,6 +248,8 @@ export const drawText =
           opacity,
           wordBreaks: [''],
         })
-      })
+
+        return offsetY + textHeight + boxHeight * Math.max(0, lineHeight - 1)
+      }, 0)
     }
   }

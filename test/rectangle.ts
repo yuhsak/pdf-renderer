@@ -107,7 +107,7 @@ describe('rectangle', () => {
         },
       ],
     })({ rect: false }).then((doc) => doc.save())
-    expect(binary1.byteLength).toEqual(binary2.byteLength)
+    expect(binary1.byteLength).not.toEqual(binary2.byteLength)
     expect(binary1.byteLength).not.toEqual(binary3.byteLength)
   })
 })

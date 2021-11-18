@@ -2,7 +2,9 @@ import { template } from '../src'
 import fs from 'fs'
 
 const source = { width: 100, height: 100 }
-const empty = template({ source, schema: [] })({}).then((doc) => doc.save())
+const empty = template({ source, schema: [] })({})
+  .then((doc) => doc.save())
+  .then((bin) => [...bin])
 const png = fs.readFileSync(`${__dirname}/../assets/superman.png`)
 const jpg = fs.readFileSync(`${__dirname}/../assets/superman.jpg`)
 
@@ -24,9 +26,10 @@ describe('image', () => {
         },
       ],
     })([{ image: png }]).then((docs) =>
-      Promise.all(docs.map((doc) => doc.save())),
+      Promise.all(docs.map((doc) => doc.save().then((bin) => [...bin]))),
     )
-    expect(binary.byteLength).not.toEqual(emptyBinary.byteLength)
+
+    expect(binary).not.toEqual(emptyBinary)
   })
 
   test('renders jpg', async () => {
@@ -46,14 +49,13 @@ describe('image', () => {
         },
       ],
     })([{ image: jpg }]).then((docs) =>
-      Promise.all(docs.map((doc) => doc.save())),
+      Promise.all(docs.map((doc) => doc.save().then((bin) => [...bin]))),
     )
-    expect(binary.byteLength).not.toEqual(emptyBinary.byteLength)
+    expect(binary).not.toEqual(emptyBinary)
   })
 
   test('skip if input value is boolean', async () => {
-    const emptyBinary = await empty
-    const [binary1, binary2] = await template({
+    const [binary1, binary2, binary3] = await template({
       source,
       schema: [
         {
@@ -67,13 +69,12 @@ describe('image', () => {
           },
         },
       ],
-    })([{ image: false }, { image: true }]).then((docs) =>
-      Promise.all(docs.map((doc) => doc.save())),
+    })([{ image: false }, { image: true }, { image: png }]).then((docs) =>
+      Promise.all(docs.map((doc) => doc.save().then((bin) => [...bin]))),
     )
-    const min = emptyBinary.byteLength - 1
-    const max = emptyBinary.byteLength + 1
-    expect(min <= binary1.byteLength && binary1.byteLength <= max).toBe(true)
-    expect(min <= binary2.byteLength && binary2.byteLength <= max).toBe(true)
+    expect(binary1).toEqual(binary2)
+    expect(binary1).not.toEqual(binary3)
+    expect(binary2).not.toEqual(binary3)
   })
 
   test('use raw height when width and height both are not specified', async () => {
@@ -91,7 +92,7 @@ describe('image', () => {
           },
         },
       ],
-    })({ image: png }).then((doc) => doc.save())
+    })({ image: png }).then((doc) => doc.save().then((bin) => [...bin]))
     const binary2 = await template({
       source,
       schema: [
@@ -104,7 +105,7 @@ describe('image', () => {
           },
         },
       ],
-    })({ image: png }).then((doc) => doc.save())
-    expect(binary1.byteLength).not.toEqual(binary2.byteLength)
+    })({ image: png }).then((doc) => doc.save().then((bin) => [...bin]))
+    expect(binary1).not.toEqual(binary2)
   })
 })

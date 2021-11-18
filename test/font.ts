@@ -2,20 +2,21 @@ import { template } from '../src'
 import fs from 'fs'
 
 const source = { width: 100, height: 100 }
-const empty = template({ source, schema: [] })({}).then((doc) => doc.save())
 const font = fs.readFileSync(`${__dirname}/../assets/Ubuntu-R.ttf`)
 
 describe('font', () => {
   test('embedds default font', async () => {
-    const empty = await template({ source, schema: [] })({}).then((doc) =>
-      doc.save(),
-    )
+    const empty = await template({ source, schema: [] })({})
+      .then((doc) => doc.save())
+      .then((bin) => [...bin])
+
     const embedded = await template({
       source,
       schema: [{ text: { type: 'text', x: 0, y: 0, width: 100, height: 100 } }],
     })({ text: false })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
+
     expect(embedded).not.toEqual(empty)
   })
 
@@ -35,7 +36,7 @@ describe('font', () => {
       ],
     })({ text: 'a' })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     const customFont = await template({
       font: {
@@ -56,7 +57,7 @@ describe('font', () => {
       ],
     })({ text: 'a' })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     expect(defaultFont).not.toEqual(customFont)
   })
@@ -81,7 +82,7 @@ describe('font', () => {
       ],
     })({ text: false })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     const superset = await template({
       font: {
@@ -105,7 +106,7 @@ describe('font', () => {
       ],
     })({ text: false })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     expect(subset).not.toEqual(superset)
   })
@@ -126,7 +127,7 @@ describe('font', () => {
       ],
     })({ text: false })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     const customFont = await template({
       font: {
@@ -147,7 +148,7 @@ describe('font', () => {
       ],
     })({ text: false })
       .then((doc) => doc.save())
-      .then((bin) => bin.byteLength)
+      .then((bin) => [...bin])
 
     expect(defaultFont).toEqual(customFont)
   })

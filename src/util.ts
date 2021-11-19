@@ -86,8 +86,8 @@ export const getY = (
   containerHeight: number,
   contentHeight: number,
 ) => {
-  return y
-  // return containerHeight - contentHeight - y
+  // return y
+  return containerHeight - contentHeight - y
 }
 
 const SIGNATURE = {

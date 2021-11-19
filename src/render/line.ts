@@ -21,11 +21,11 @@ export const drawLine =
       page.drawLine({
         start: {
           x: start.x,
-          y: start.y,
+          y: page.getHeight() - start.y,
         },
         end: {
           x: end.x,
-          y: end.y,
+          y: page.getHeight() - end.y,
         },
         thickness: lineWidthPt,
         color: colorRgb,

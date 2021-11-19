@@ -1,5 +1,5 @@
 import { isArray } from 'what-is-that'
-import { PDFDocument, PDFPage, StandardFonts } from 'pdf-lib'
+import { PDFDocument, PDFPage } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import type { TemplateSchema } from './schema'
 import type { TemplateSource } from './source'
@@ -46,23 +46,21 @@ export const template = <S extends readonly TemplateSchema[]>({
         const doc = await PDFDocument.create()
         doc.registerFontkit(fontkit)
 
-        if (meta) {
-          doc.setProducer(
-            meta.producer !== void 0
-              ? meta.producer
-              : 'pdf-renderer (https://github.com/yuhsak/pdf-renderer)',
-          )
-          doc.setCreator(
-            meta.creator !== void 0
-              ? meta.creator
-              : 'pdf-renderer (https://github.com/yuhsak/pdf-renderer)',
-          )
-          if (meta.title) doc.setTitle(meta.title)
-          if (meta.subject) doc.setSubject(meta.subject)
-          if (meta.author) doc.setAuthor(meta.author)
-          if (meta.language) doc.setLanguage(meta.language)
-          if (meta.keywords) doc.setKeywords(meta.keywords)
-        }
+        doc.setProducer(
+          meta?.producer !== void 0
+            ? meta?.producer
+            : 'pdf-renderer (https://github.com/yuhsak/pdf-renderer)',
+        )
+        doc.setCreator(
+          meta?.creator !== void 0
+            ? meta?.creator
+            : 'pdf-renderer (https://github.com/yuhsak/pdf-renderer)',
+        )
+        if (meta?.title) doc.setTitle(meta.title)
+        if (meta?.subject) doc.setSubject(meta.subject)
+        if (meta?.author) doc.setAuthor(meta.author)
+        if (meta?.language) doc.setLanguage(meta.language)
+        if (meta?.keywords) doc.setKeywords(meta.keywords)
 
         const fontData = await getFont(doc)
         const getPages = getPagesFromSource(doc)

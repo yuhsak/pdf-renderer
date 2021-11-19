@@ -86,7 +86,6 @@ export const getY = (
   containerHeight: number,
   contentHeight: number,
 ) => {
-  // return y
   return containerHeight - contentHeight - y
 }
 
